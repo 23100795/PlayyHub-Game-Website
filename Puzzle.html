@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Games - PlayyHub</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body { 
+            font-family: Arial, sans-serif;
+            background-image: url('https://tse2.mm.bing.net/th?id=OIP.eIforPxPPas-iUy5dfZ9HAHaEo&pid=Api&P=0&h=180');
+            background-size: cover;
+            min-height: 100vh;
+        }
+
+        /* Top Pink Header Bar */
+        .page-header {
+            background-color: pink;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 32px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            color: black;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+        }
+
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-left: 80px;
+        }
+
+        /* Preview State: Locked */
+        #game-container { 
+            width: 350px; 
+            height: 350px; 
+            padding: 20px; 
+            border: 2px solid #333; 
+            background: #1e1e2f; 
+            border-radius: 12px; 
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+            user-select: none;
+            opacity: 0.95;
+            position: relative;
+        }
+
+        /* Active Fullscreen Mode */
+        #game-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            border: none;
+            z-index: 9999;
+            padding: 20px;
+            justify-content: center;
+            pointer-events: auto !important;
+            opacity: 1;
+            background: #0f0f1a;
+        }
+
+        .game-title {
+            font-size: 24px;
+            color: #00d2d3;
+            font-weight: bold;
+        }
+
+        #game-container.fullscreen .game-title {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            font-weight: bold;
+            font-size: 16px;
+            color: #ff9ff3;
+        }
+
+        #game-container.fullscreen .stats-bar {
+            font-size: 22px;
+            max-width: 450px;
+            margin-bottom: 10px;
+        }
+
+        canvas {
+            background: #181828;
+            border: 3px solid #00d2d3;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 210, 211, 0.3);
+            cursor: crosshair;
+            pointer-events: auto !important;
+        }
+
+        .close-btn {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: #ff4757;
+            color: white;
+            padding: 10px 18px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 10000;
+        }
+
+        #game-container.fullscreen .close-btn {
+            display: block;
+        }
+
+        .close-btn:hover {
+            background: #ff6b81;
+        }
+
+        /* Win Overlay Modal */
+        #win-modal {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(30, 30, 47, 0.95);
+            border: 3px solid #2ed573;
+            box-shadow: 0 0 25px rgba(46, 213, 115, 0.6);
+            border-radius: 16px;
+            padding: 40px 30px;
+            text-align: center;
+            z-index: 10001;
+            width: 80%;
+            max-width: 400px;
+            color: white;
+        }
+
+        #win-modal h2 {
+            font-size: 38px;
+            color: #2ed573;
+            margin-bottom: 15px;
+        }
+
+        #win-modal p {
+            font-size: 22px;
+            margin-bottom: 25px;
+            color: #ff9ff3;
+            font-weight: bold;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-buttons button {
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-restart {
+            background-color: #2ed573;
+            color: black;
+        }
+
+        .btn-exit {
+            background-color: #ff4757;
+            color: white;
+        }
+
+        .modal-buttons button:hover {
+            opacity: 0.85;
+        }
+
+        .game-title-label {
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'Times New Roman', Times, serif;
+            color: black;
+            margin-top: 15px;
+            width: 350px;
+            text-align: center;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .game-title-label:hover {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        Puzzle Games
+    </div>
+
+    <div class="game-wrapper">
+        <div id="game-container">
+            <button class="close-btn" onclick="closeGame()">✕ Exit Game</button>
+            
+            <div class="game-title">Bubble Shooter Pop</div>
+
+            <div class="stats-bar">
+                <div>Score: <span id="score">0</span></div>
+            </div>
+
+            <canvas id="gameCanvas" width="320" height="240"></canvas>
+
+            <!-- Win Overlay Box -->
+            <div id="win-modal">
+                <h2>🎉 YOU WIN!</h2>
+                <p>Your Score: <span id="final-score">0</span></p>
+                <div class="modal-buttons">
+                    <button class="btn-restart" onclick="restartGame()">Play Again</button>
+                    <button class="btn-exit" onclick="closeGame()">Exit Game</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-title-label" onclick="openGame()">Bubble Shooter Pop</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const COLORS = ["#ff4757", "#2ed573", "#1e90ff", "#ffa502", "#9b59b6"];
+        const RADIUS = 14;
+        const COLS = 10;
+        const ROWS = 10;
+
+        let grid = [];
+        let fallingBubbles = [];
+        let currentBubble = null;
+        let nextColor = "";
+        let bullet = null;
+        let score = 0;
+        let isPlaying = false;
+        let animId = null;
+
+        let mousePos = { x: 0, y: 0 };
+
+        function openGame() {
+            const container = document.getElementById('game-container');
+            container.classList.add('fullscreen');
+            
+            canvas.width = 380;
+            canvas.height = 500;
+            isPlaying = true;
+            initGame();
+        }
+
+        function closeGame() {
+            const container = document.getElementById('game-container');
+            container.classList.remove('fullscreen');
+            document.getElementById('win-modal').style.display = 'none';
+            
+            isPlaying = false;
+            if (animId) cancelAnimationFrame(animId);
+            
+            canvas.width = 320;
+            canvas.height = 240;
+            drawStaticPreview();
+        }
+
+        function initGame() {
+            score = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('win-modal').style.display = 'none';
+            fallingBubbles = [];
+
+            grid = [];
+            for (let r = 0; r < ROWS; r++) {
+                grid[r] = [];
+                for (let c = 0; c < COLS; c++) {
+                    if (r < 4) {
+                        grid[r][c] = COLORS[Math.floor(Math.random() * COLORS.length)];
+                    } else {
+                        grid[r][c] = null;
+                    }
+                }
+            }
+
+            // Initial smart color setup
+            nextColor = getRandomExistingColor();
+            spawnNextBubble();
+
+            if (animId) cancelAnimationFrame(animId);
+            gameLoop();
+        }
+
+        function restartGame() {
+            initGame();
+        }
+
+        /* SMART COLOR LOGIC: Scans grid for remaining colors */
+        function getRemainingColors() {
+            let activeColors = new Set();
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (grid[r][c]) {
+                        activeColors.add(grid[r][c]);
+                    }
+                }
+            }
+            return Array.from(activeColors);
+        }
+
+        function getRandomExistingColor() {
+            let available = getRemainingColors();
+            if (available.length === 0) return COLORS[0]; // Fallback
+            return available[Math.floor(Math.random() * available.length)];
+        }
+
+        function spawnNextBubble() {
+            let activeColors = getRemainingColors();
+
+            // If no colors are left on board, trigger Win!
+            if (activeColors.length === 0) {
+                document.getElementById('final-score').textContent = score;
+                document.getElementById('win-modal').style.display = 'block';
+                currentBubble = null;
+                bullet = null;
+                return;
+            }
+
+            // Ensure next color exists on the board
+            if (!nextColor || !activeColors.includes(nextColor)) {
+                nextColor = getRandomExistingColor();
+            }
+
+            currentBubble = {
+                x: canvas.width / 2,
+                y: canvas.height - 30,
+                color: nextColor
+            };
+
+            // Generate next upcoming color from currently existing colors only
+            nextColor = getRandomExistingColor();
+            bullet = null;
+        }
+
+        function getBubblePos(r, c) {
+            let offset = (r % 2 === 1) ? RADIUS : 0;
+            let x = c * (RADIUS * 2) + RADIUS + offset + 10;
+            let y = r * (RADIUS * 2) + RADIUS + 10;
+            return { x, y };
+        }
+
+        function getNeighbors(r, c) {
+            return [
+                { r: r - 1, c: c }, { r: r + 1, c: c },
+                { r: r, c: c - 1 }, { r: r, c: c + 1 },
+                { r: r - 1, c: c + (r % 2 === 1 ? 1 : -1) },
+                { r: r + 1, c: c + (r % 2 === 1 ? 1 : -1) }
+            ];
+        }
+
+        function drawGrid() {
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (grid[r][c]) {
+                        let pos = getBubblePos(r, c);
+                        drawCircle(pos.x, pos.y, grid[r][c]);
+                    }
+                }
+            }
+        }
+
+        function drawCircle(x, y, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, RADIUS - 1, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+            ctx.stroke();
+            ctx.closePath();
+        }
+
+        function drawAimLine() {
+            if (!currentBubble || bullet || mousePos.y >= currentBubble.y) return;
+
+            const angle = Math.atan2(mousePos.y - currentBubble.y, mousePos.x - currentBubble.x);
+            const lineLength = 180;
+
+            const endX = currentBubble.x + Math.cos(angle) * lineLength;
+            const endY = currentBubble.y + Math.sin(angle) * lineLength;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.setLineDash([8, 6]);
+            ctx.moveTo(currentBubble.x, currentBubble.y);
+            ctx.lineTo(endX, endY);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = currentBubble.color;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawShooter() {
+            if (!currentBubble) return;
+
+            ctx.fillStyle = "#aaa";
+            ctx.font = "12px Arial";
+            ctx.fillText("NEXT:", 20, canvas.height - 15);
+            drawCircle(70, canvas.height - 20, nextColor);
+
+            drawCircle(currentBubble.x, currentBubble.y, currentBubble.color);
+        }
+
+        function updateFallingBubbles() {
+            for (let i = fallingBubbles.length - 1; i >= 0; i--) {
+                let fb = fallingBubbles[i];
+                fb.y += fb.vy;
+                fb.vy += 0.4;
+                drawCircle(fb.x, fb.y, fb.color);
+
+                if (fb.y - RADIUS > canvas.height) {
+                    fallingBubbles.splice(i, 1);
+                }
+            }
+        }
+
+        function gameLoop() {
+            if (!isPlaying) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawGrid();
+            drawAimLine();
+            drawShooter();
+            updateFallingBubbles();
+
+            if (bullet) {
+                bullet.x += bullet.dx;
+                bullet.y += bullet.dy;
+
+                // Wall bounces
+                if (bullet.x - RADIUS <= 0 || bullet.x + RADIUS >= canvas.width) {
+                    bullet.dx *= -1;
+                }
+
+                // Hit detection
+                let hit = false;
+                if (bullet.y - RADIUS <= 10) {
+                    hit = true;
+                } else {
+                    for (let r = 0; r < ROWS; r++) {
+                        for (let c = 0; c < COLS; c++) {
+                            if (grid[r][c]) {
+                                let pos = getBubblePos(r, c);
+                                let dist = Math.hypot(bullet.x - pos.x, bullet.y - pos.y);
+                                if (dist < RADIUS * 2) {
+                                    hit = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (hit) break;
+                    }
+                }
+
+                if (hit) {
+                    snapToGrid(bullet);
+                } else {
+                    drawCircle(bullet.x, bullet.y, bullet.color);
+                }
+            }
+
+            animId = requestAnimationFrame(gameLoop);
+        }
+
+        function snapToGrid(b) {
+            let bestR = 0, bestC = 0;
+            let minDist = Infinity;
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (!grid[r][c]) {
+                        let pos = getBubblePos(r, c);
+                        let dist = Math.hypot(b.x - pos.x, b.y - pos.y);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            bestR = r;
+                            bestC = c;
+                        }
+                    }
+                }
+            }
+
+            grid[bestR][bestC] = b.color;
+            checkMatches(bestR, bestC, b.color);
+            triggerFloatingDropAnimation();
+
+            // CHECK WIN CONDITION
+            if (checkWinCondition()) {
+                document.getElementById('final-score').textContent = score;
+                document.getElementById('win-modal').style.display = 'block';
+                currentBubble = null;
+                bullet = null;
+                return;
+            }
+
+            spawnNextBubble();
+
+            if (bestR >= ROWS - 1) {
+                alert("💥 Game Over! Final Score: " + score);
+                initGame();
+            }
+        }
+
+        function checkWinCondition() {
+            return getRemainingColors().length === 0;
+        }
+
+        function checkMatches(startR, startC, targetColor) {
+            let matched = [];
+            let visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+
+            function dfs(r, c) {
+                if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+                if (visited[r][c] || grid[r][c] !== targetColor) return;
+
+                visited[r][c] = true;
+                matched.push({ r, c });
+
+                let neighbors = getNeighbors(r, c);
+                neighbors.forEach(n => dfs(n.r, n.c));
+            }
+
+            dfs(startR, startC);
+
+            if (matched.length >= 3) {
+                matched.forEach(item => {
+                    grid[item.r][item.c] = null;
+                });
+                score += matched.length * 10;
+                document.getElementById('score').textContent = score;
+            }
+        }
+
+        function triggerFloatingDropAnimation() {
+            let connected = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+
+            function dfs(r, c) {
+                if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+                if (connected[r][c] || !grid[r][c]) return;
+
+                connected[r][c] = true;
+
+                let neighbors = getNeighbors(r, c);
+                neighbors.forEach(n => dfs(n.r, n.c));
+            }
+
+            for (let c = 0; c < COLS; c++) {
+                if (grid[0][c]) {
+                    dfs(0, c);
+                }
+            }
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (grid[r][c] && !connected[r][c]) {
+                        let pos = getBubblePos(r, c);
+                        
+                        fallingBubbles.push({
+                            x: pos.x,
+                            y: pos.y,
+                            vy: 2,
+                            color: grid[r][c]
+                        });
+
+                        grid[r][c] = null;
+                    }
+                }
+            }
+        }
+
+        canvas.addEventListener("mousemove", (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mousePos.x = e.clientX - rect.left;
+            mousePos.y = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener("click", (e) => {
+            if (!isPlaying || bullet) return;
+            if (document.getElementById('win-modal').style.display === 'block') return;
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            if (mouseY >= currentBubble.y) return;
+
+            const angle = Math.atan2(mouseY - currentBubble.y, mouseX - currentBubble.x);
+            const speed = 12;
+
+            bullet = {
+                x: currentBubble.x,
+                y: currentBubble.y,
+                dx: Math.cos(angle) * speed,
+                dy: Math.sin(angle) * speed,
+                color: currentBubble.color
+            };
+        });
+
+        function drawStaticPreview() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 8; c++) {
+                    let x = c * 35 + 30;
+                    let y = r * 35 + 30;
+                    drawCircle(x, y, COLORS[(r + c) % COLORS.length]);
+                }
+            }
+            drawCircle(160, 200, COLORS[0]);
+        }
+
+        drawStaticPreview();
+    </script>
+</body>
+</html>

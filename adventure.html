@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adventure Games - PlayyHub</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body { 
+            font-family: Arial, sans-serif;
+            background-image: url('https://tse2.mm.bing.net/th?id=OIP.eIforPxPPas-iUy5dfZ9HAHaEo&pid=Api&P=0&h=180');
+            background-size: cover;
+            min-height: 100vh;
+        }
+
+        /* Top Header Banner */
+        .page-header {
+            background-color: pink;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 32px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            color: black;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+        }
+
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-left: 80px;
+        }
+
+        /* Preview State: Completely locked / non-clickable */
+        #game-container { 
+            width: 350px; 
+            height: 350px; 
+            padding: 25px; 
+            border: 2px solid #333; 
+            background: #000; 
+            border-radius: 8px; 
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            pointer-events: none; /* Disables all buttons and interactions in preview */
+            user-select: none;
+            opacity: 0.9;
+        }
+
+        /* Active Fullscreen State: Unlocked and playable */
+        #game-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            border: none;
+            z-index: 9999;
+            padding: 40px;
+            justify-content: center;
+            pointer-events: auto; /* Enables buttons and game controls */
+            opacity: 1;
+        }
+
+        #game-container h2 {
+            font-size: 26px;
+            color: #ff4d4d;
+            margin-bottom: 20px;
+        }
+
+        #game-container.fullscreen h2 {
+            font-size: 42px;
+            margin-bottom: 30px;
+        }
+
+        #story {
+            font-size: 15px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            max-width: 700px;
+        }
+
+        #game-container.fullscreen #story {
+            font-size: 22px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button { 
+            padding: 12px 20px; 
+            cursor: pointer; 
+            background: darkred; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 15px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        #game-container.fullscreen button {
+            font-size: 18px;
+            padding: 15px 25px;
+        }
+
+        button:hover { 
+            background: red; 
+        }
+
+        /* Close Button in Fullscreen */
+        .close-btn {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: #444;
+            color: white;
+            padding: 10px 18px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #game-container.fullscreen .close-btn {
+            display: block;
+        }
+
+        .close-btn:hover {
+            background: #666;
+        }
+
+        /* Clickable Title Link below preview card */
+        .game-title-label {
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'Times New Roman', Times, serif;
+            color: black;
+            margin-top: 15px;
+            width: 350px;
+            text-align: center;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .game-title-label:hover {
+            color: blue;
+        }
+
+        .fade { 
+            animation: fadeIn 1.2s ease-in; 
+        }
+
+        @keyframes fadeIn { 
+            from { opacity: 0; } 
+            to { opacity: 1; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        Adventure Games
+    </div>
+
+    <div class="game-wrapper">
+        <!-- Preview Box (Non-interactive until title is clicked) -->
+        <div id="game-container">
+            <button class="close-btn" onclick="closeGame()">✕ Exit Fullscreen</button>
+            <h2>Dark Forest Adventure</h2>
+            <p id="story" class="fade">You wake up in a mysterious forest. The air is thick with fog, and eerie whispers fill the air.</p>
+            <div id="button-group" class="button-group">
+                <button onclick="choose('left')">Follow glowing path</button>
+                <button onclick="choose('right')">Enter haunted ruins</button>
+            </div>
+        </div>
+
+        <!-- CLICK THIS TITLE TO START PLAYING -->
+        <div class="game-title-label" onclick="openGame()">Dark Forest Adventure</div>
+    </div>
+
+    <script>
+        function openGame() {
+            const container = document.getElementById('game-container');
+            container.classList.add('fullscreen');
+        }
+
+        function closeGame() {
+            const container = document.getElementById('game-container');
+            container.classList.remove('fullscreen');
+            resetGame();
+        }
+
+        function choose(direction) {
+            let story = document.getElementById('story');
+            let btnGroup = document.getElementById('button-group');
+
+            story.classList.remove('fade');
+            void story.offsetWidth;
+            story.classList.add('fade');
+            
+            if (direction === 'left') {
+                story.innerText = "You follow the glowing path and discover a hidden village of mystical beings. They grant you a powerful relic!";
+                btnGroup.innerHTML = `
+                    <button onclick="choose('relic')">Wield the relic</button>
+                    <button onclick="choose('library')">Seek hidden library</button>
+                `;
+            } else if (direction === 'right') {
+                story.innerText = "You enter the haunted ruins, and a ghostly figure warns you of an ancient curse. Do you flee or investigate?";
+                btnGroup.innerHTML = `
+                    <button onclick="choose('flee')">Flee back</button>
+                    <button onclick="choose('investigate')">Investigate</button>
+                `;
+            } else if (direction === 'relic') {
+                story.innerText = "You wield the relic and harness immense magical energy to protect the forest!";
+                btnGroup.innerHTML = `<button onclick="resetGame()">Play Again</button>`;
+            } else if (direction === 'library') {
+                story.innerText = "You discover ancient secrets in the library and master mystical knowledge!";
+                btnGroup.innerHTML = `<button onclick="resetGame()">Play Again</button>`;
+            } else if (direction === 'flee') {
+                story.innerText = "You flee back to safety, surviving another day.";
+                btnGroup.innerHTML = `<button onclick="resetGame()">Play Again</button>`;
+            } else if (direction === 'investigate') {
+                story.innerText = "You uncover the ancient secret of the ruins and break the curse!";
+                btnGroup.innerHTML = `<button onclick="resetGame()">Play Again</button>`;
+            }
+        }
+
+        function resetGame() {
+            let story = document.getElementById('story');
+            let btnGroup = document.getElementById('button-group');
+            story.innerText = "You wake up in a mysterious forest. The air is thick with fog, and eerie whispers fill the air.";
+            btnGroup.innerHTML = `
+                <button onclick="choose('left')">Follow glowing path</button>
+                <button onclick="choose('right')">Enter haunted ruins</button>
+            `;
+        }
+    </script>
+</body>
+</html>
